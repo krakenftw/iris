@@ -17,6 +17,8 @@ dotenv.load_dotenv()
 
 
 def handle_exit(signal, frame):
+    slack_service.close_connection()    
+    sys.exit(0)
     """Handle exit signals gracefully"""
     console.print("\n[bold yellow]Shutting down Slack listener...[/bold yellow]")
     if slack_service and hasattr(slack_service, "socket_client"):

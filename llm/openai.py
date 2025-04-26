@@ -151,18 +151,17 @@ class BaseClient:
             pass
 
 
-class AzureOpenAIClient(BaseClient):
+class OpenAIClient(BaseClient):
     """
-    A client for interacting with the Azure OpenAI API
+    A client for interacting with the OpenAI API.
     """
 
     def __init__(
         self,
-        model_id: str,
-        api_version: str,
-        azure_endpoint: str,
-        api_key: str,
+        model_id: str = "gpt-4o-mini",
+        base_url: Optional[str] = None,
         keep_history: bool = True,
+        api_key: Optional[str] = None,
         default_response_kwargs: Optional[Dict[str, Any]] = None,
         prepare_messages_callback: Optional[Callable[[List], List]] = None,
         **kwargs,
@@ -172,8 +171,7 @@ class AzureOpenAIClient(BaseClient):
         """
         super().__init__(
             model_id=model_id,
-            azure_endpoint=azure_endpoint,
-            api_version=api_version,
+            base_url=base_url,
             keep_history=keep_history,
             api_key=api_key,
             default_response_kwargs=default_response_kwargs,
@@ -181,22 +179,11 @@ class AzureOpenAIClient(BaseClient):
             **kwargs,
         )
 
-    def _initialize_client(
-        self,
-        api_key: str,
-        azure_endpoint: str,
-        api_version: str,
-        **kwargs,
-    ) -> None:
+    def _initialize_client(self, api_key: str, base_url: Optional[str] = None, **kwargs) -> None:
         """
         Initialize the OpenAI client with the API key.
         """
-        self.client = openai.AzureOpenAI(
-            api_key=api_key,
-            azure_endpoint=azure_endpoint,
-            api_version=api_version,
-            **kwargs,
-        )
+        self.client = openai.OpenAI(api_key=api_key, base_url=base_url, **kwargs)
 
     def _make_api_call(
         self,
@@ -204,7 +191,7 @@ class AzureOpenAIClient(BaseClient):
         **kwargs,
     ) -> str:
         """
-        Get a response from the OpenAI model.
+        Make the API call to the OpenAI model.
         """
         request_kwargs = self.default_response_kwargs.copy()
         request_kwargs.update(kwargs)
