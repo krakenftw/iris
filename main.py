@@ -2,11 +2,21 @@ import asyncio
 import json
 import uuid
 
+import dotenv
 import websockets
 from pydantic import BaseModel
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
+
+from tools.calenders.googlecal.service import GoogleCalendarService
+from tools.linear.service import LinearService
+
+dotenv.load_dotenv()
+
+
+linear_service = LinearService()
+calendar_service = GoogleCalendarService()
 
 console = Console()
 
