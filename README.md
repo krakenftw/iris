@@ -1,33 +1,58 @@
-# Global Chat App
+# Iris - Your Team's AI Assistant
 
-A simple terminal-based chat application using WebSockets.
+Iris is an intelligent AI-powered platform that streamlines team collaboration by seamlessly integrating with your essential work tools. It provides hyper-personalized team interactions and automates routine tasks through natural language commands.
 
-## Features
-- Single global chat room for all users
-- Real-time messaging with all connected users
-- Terminal-based interface with rich formatting
-- Username identification for messages
+## 🌟 Key Features
 
-## Setup
+### Integrations
 
-1. Install the required dependencies:
+- **Slack** - Monitor and manage team communications
+- **Google Calendar** - Smart meeting scheduling and conflict detection
+- **Linear** - Automated issue tracking and task management
+- More integrations coming soon!
+
+### Smart Capabilities
+
+- **Natural Language Processing** - Understand and execute team commands naturally
+- **Context-Aware Task Management** - Create and assign tasks with proper context
+- **Intelligent Scheduling** - Schedule meetings considering team availability
+- **Priority Management** - Handle urgent tasks and critical updates
+- **Team Coordination** - Ping relevant team members and manage communications
+
+## 🚀 Example Use Cases
+
+```text
+"Schedule a design review meeting with the frontend team for tomorrow"
+"Create an urgent bug ticket for Sarah about the payment API"
+"Check if John is available for a quick sync this afternoon"
 ```
+
+## 🛠️ Setup
+
+1. Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-## Usage
-1. Run the application:
-```
+1. Configure your integrations:
+
+- Set up API keys for Slack, Google Calendar, and Linear
+- Configure team preferences and access levels
+
+## 🎯 Usage
+
+1. Start Iris:
+
+```bash
 python main.py
 ```
 
-2. Enter your username when prompted
+1. Start interacting with natural language commands
 
-3. Start chatting! Press Ctrl+C to exit.
+## 💡 How It Works
 
-## How It Works
-- The server and client run in the same process
-- The application uses WebSockets for real-time communication
-- All users connect to a single global chat
-- When a message is sent, it's broadcast to all other connected users
-- Users are notified when others join or leave the chat
+- **Context Understanding**: Maintains awareness of your team's tasks, meetings, and communications
+- **Smart Automation**: Automatically creates issues, schedules meetings, and sends notifications
+- **Conflict Resolution**: Checks for scheduling conflicts and team availability
+- **Real-time Updates**: Keeps everyone in sync with instant notifications and updates
