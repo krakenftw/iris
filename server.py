@@ -117,7 +117,3 @@ async def start_server():
     config = uvicorn.Config("server:app", host="0.0.0.0", port=8765, reload=False)
     server = uvicorn.Server(config)
     await server.serve()
-
-
-if __name__ == "__main__":
-    asyncio.run(start_server())
