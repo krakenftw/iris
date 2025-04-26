@@ -24,12 +24,20 @@ class Orchestrator:
         self.input_queue = asyncio.Queue()
         self.output_queue = asyncio.Queue()
 
-    def start(self):
+    async def start(self):
         while True:
             message = await self.input_queue.get()
+            self.consume_nonblocking(message)
 
-    def consume_nonblocking(self, message: str):
-        asyncio.create_task(self.consume(message))
+    async def consume_nonblocking(self, message: str):
+        take_action = await self.take_action(message)
+        if take_action:
+            tool_calling_prompt = await self.get_tool_calling_prompt(message)
+            tool_response = await self.llm.get_response(tool_calling_prompt)
+            await self.output_queue.put(tool_response)
 
-    async def consume(self, message: str):
-        await self.output_queue.put(message)
+    async def take_action(self, message: str):
+        pass
+
+    async def get_tool_calling_prompt(self, message: str):
+        pass
