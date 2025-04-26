@@ -2,10 +2,14 @@ import os
 import json
 from typing import Dict, List, Any, Optional, Union
 from orchestrator.client import LLMClient
-
-llm_client = LLMClient()
+from tools.slack.service import SlackService
 
 class ToolCallingLayer:
+    def __init__(self):
+        self.llm_client = LLMClient()
+        self.slack_service = SlackService()
+        self.tools = self._initialize_tools()
+    
     def _initialize_tools(self) -> List[Dict[str, Any]]:
         """Initialize all available tools."""
         return [
@@ -132,9 +136,10 @@ class ToolCallingLayer:
                 return f"Error calculating expression: {str(e)}"
                 
         elif tool_name == "slack_send_message":
-            # Implementation for sending Slack messages would go here
+            # Implementation for sending Slack messages
             channel = arguments.get("channel", "")
             message = arguments.get("message", "")
+            self.slack_service.send_message(channel, message)
             return f"Message sent to Slack channel {channel}: {message}"
             
         elif tool_name == "gcal_create_event":
@@ -168,16 +173,15 @@ class ToolCallingLayer:
             "content": user_prompt
         })
         
-        response = llm_client.get_response(
+        # Get response with tools from the LLM client
+        response = self.llm_client.get_response(
             prompt=user_prompt,
-            tools=self._initialize_tools(),
+            tools=self.tools,
         )
         
-        print(response)
         message = response.choices[0].message
         
         if not hasattr(message, 'tool_calls') or not message.tool_calls:
-            print("No tool was called")
             # No tool was called
             return {
                 "result": message.content,
@@ -187,13 +191,11 @@ class ToolCallingLayer:
         # Process tool calls
         tool_results = []
         for tool_call in message.tool_calls:
-            print("calling tool", tool_call)
             function_name = tool_call.function.name
             function_args = json.loads(tool_call.function.arguments)
             
             # Execute the tool
             result = self._execute_tool(function_name, function_args)
-            print("result", result)
             tool_results.append({
                 "tool": function_name,
                 "args": function_args,
@@ -222,10 +224,9 @@ class ToolCallingLayer:
                 "content": result
             })
         
-        print(messages)
-        final_response = llm_client.get_response(
-            prompt=user_prompt,
-        )
+        # Get final response from the model
+        final_prompt = "Based on the tool results, provide a helpful summary response."
+        final_response = self.llm_client.get_response(prompt=final_prompt)
         
         return {
             "result": final_response.choices[0].message.content,

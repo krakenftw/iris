@@ -1,25 +1,33 @@
 import os
-from groq import Groq
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
-groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
-client = groq
-MODEL = "llama-3.1-8b-instant"
+MODEL = "gpt-4o"
 
 class LLMClient:
     def __init__(self):
-        self.client = groq
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.model = MODEL
 
-    def get_response(self, prompt: str,tools:Optional[List[Dict[str, Any]]]=None):
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            tools=tools,
-            tool_choice="auto",
-            max_tokens=4096
-        )
+    def get_response(self, prompt: str, tools: Optional[List[Dict[str, Any]]] = None, max_tokens: int = 4096):
+        messages = [{"role": "user", "content": prompt}]
+        
+        if tools:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=tools,
+                tool_choice="auto",
+                max_tokens=max_tokens
+            )
+        else:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                max_tokens=max_tokens
+            )
+        
         return response
