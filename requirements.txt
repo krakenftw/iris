@@ -22,3 +22,4 @@ requests-toolbelt
 python-dotenv
 slack-sdk>=3.19.0
 openai
+mem0ai

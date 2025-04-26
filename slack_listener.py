@@ -1,5 +1,5 @@
 from tools.slack.service import SlackService
-from ai_team_processor import AITeamInteractor
+from orchestrator.ai_team_processor import AITeamInteractor
 import dotenv
 import os
 import time
