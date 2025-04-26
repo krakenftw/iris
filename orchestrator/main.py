@@ -3,7 +3,7 @@ import os
 
 from rich.console import Console
 import llm
-import LLMClient
+from orchestrator.client import LLMClient
 
 class Orchestrator:
     """
@@ -15,7 +15,6 @@ class Orchestrator:
     def __init__(self):
         self.console = Console()
         self.llm_client = LLMClient()
-       
 
     def process(self, message: str):
         print(f"Processing message: {message}")

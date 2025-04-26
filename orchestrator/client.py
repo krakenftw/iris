@@ -22,4 +22,4 @@ class LLMClient:
             tool_choice="auto",
             max_tokens=4096
         )
-        return response.choices[0].message.content
+        return response

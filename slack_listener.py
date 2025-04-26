@@ -5,6 +5,7 @@ import time
 
 import dotenv
 from rich.console import Console
+from tools.tools import ToolCallingLayer
 
 from orchestrator.main import Orchestrator
 from tools.slack.service import SlackService
@@ -14,6 +15,8 @@ console = Console()
 
 # Load environment variables
 dotenv.load_dotenv()
+
+tool_layer = ToolCallingLayer()
 
 
 def handle_exit(signal, frame):
@@ -43,7 +46,8 @@ def process_slack_message(channel_id, user_id, text, event_data):
         event_data: Full event data from Slack
     """
     console.print(f"[bold blue]Received message:[/bold blue] {text}")
-    orchestrator.process(text)
+    # orchestrator.process(text)
+    tool_layer.process_query(text)
 
 
 def main():

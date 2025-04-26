@@ -1,6 +1,9 @@
 import os
 import json
 from typing import Dict, List, Any, Optional, Union
+from orchestrator.client import LLMClient
+
+llm_client = LLMClient()
 
 class ToolCallingLayer:
     def _initialize_tools(self) -> List[Dict[str, Any]]:
@@ -165,17 +168,16 @@ class ToolCallingLayer:
             "content": user_prompt
         })
         
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            tools=self.tools,
-            tool_choice="auto",
-            max_tokens=4096
+        response = llm_client.get_response(
+            prompt=user_prompt,
+            tools=self._initialize_tools(),
         )
         
+        print(response)
         message = response.choices[0].message
         
         if not hasattr(message, 'tool_calls') or not message.tool_calls:
+            print("No tool was called")
             # No tool was called
             return {
                 "result": message.content,
@@ -185,11 +187,13 @@ class ToolCallingLayer:
         # Process tool calls
         tool_results = []
         for tool_call in message.tool_calls:
+            print("calling tool", tool_call)
             function_name = tool_call.function.name
             function_args = json.loads(tool_call.function.arguments)
             
             # Execute the tool
             result = self._execute_tool(function_name, function_args)
+            print("result", result)
             tool_results.append({
                 "tool": function_name,
                 "args": function_args,
@@ -218,11 +222,9 @@ class ToolCallingLayer:
                 "content": result
             })
         
-        # Get final response from the model
-        final_response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            max_tokens=4096
+        print(messages)
+        final_response = llm_client.get_response(
+            prompt=user_prompt,
         )
         
         return {
