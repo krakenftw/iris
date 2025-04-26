@@ -2,8 +2,10 @@ import asyncio
 from typing import Dict, Set
 
 import uvicorn
+import websockets
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from rich.console import Console
 
 app = FastAPI()
 
@@ -16,23 +18,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Store active connections per session
-connections: Dict[str, Set[WebSocket]] = {}
+# Store active rooms with their connections
+rooms: Dict[str, Set[WebSocket]] = {}
 
-# Store usernames per session
-users: Dict[str, Dict[WebSocket, str]] = {}
+# Store usernames per connection
+user_names: Dict[WebSocket, str] = {}
+
+# Store which room a connection belongs to
+connection_rooms: Dict[WebSocket, str] = {}
 
 
-async def get_invitation_url(session_id: str) -> str:
-    return f"http://localhost:8765/ws/{session_id}"
-
-
-async def broadcast_message(
-    session_id: str, message: dict, exclude_websocket: WebSocket = None
+async def broadcast_to_room(
+    room_id: str, message: dict, exclude_websocket: WebSocket = None
 ):
-    """Broadcast a message to all connections in a session except the sender"""
-    if session_id in connections:
-        for connection in connections[session_id]:
+    """Send a message to all connections in a room except the sender"""
+    if room_id in rooms:
+        for connection in rooms[room_id]:
             if connection != exclude_websocket:
                 await connection.send_json(message)
 
@@ -42,75 +43,72 @@ async def root():
     return {"message": "WebSocket Group Chat Server"}
 
 
-@app.websocket("/ws/{session_id}/{username}")
-async def websocket_endpoint(websocket: WebSocket, session_id: str, username: str):
+@app.websocket("/ws/{room_id}/{username}")
+async def websocket_endpoint(websocket: WebSocket, room_id: str, username: str):
     await websocket.accept()
 
-    # Initialize session if it doesn't exist
-    if session_id not in connections:
-        connections[session_id] = set()
-        users[session_id] = {}
-        session_created = True
+    # Initialize room if it doesn't exist
+    if room_id not in rooms:
+        rooms[room_id] = set()
+        is_new_room = True
     else:
-        session_created = False
+        is_new_room = False
 
-    # Add connection to session
-    connections[session_id].add(websocket)
-    users[session_id][websocket] = username
+    # Add connection to room
+    rooms[room_id].add(websocket)
+    user_names[websocket] = username
+    connection_rooms[websocket] = room_id
 
     # Announce user joined
-    if session_created:
-        await broadcast_message(
-            session_id,
-            {"type": "system", "content": f"{username} created a new group"},
-        )
+    if is_new_room:
+        system_message = {
+            "type": "system",
+            "content": f"{username} created a new group",
+        }
     else:
-        await broadcast_message(
-            session_id,
-            {"type": "system", "content": f"{username} joined the group"},
-            websocket,
-        )
+        system_message = {"type": "system", "content": f"{username} joined the group"}
 
-    # Send current user list to new user
-    if not session_created and len(users[session_id]) > 1:
-        current_users = [
-            name for name in users[session_id].values() if name != username
-        ]
-        await websocket.send_json(
-            {
-                "type": "system",
-                "content": f"Currently in group: {', '.join(current_users)}",
-            }
-        )
+    await broadcast_to_room(room_id, system_message)
 
-    try:
-        while True:
-            # Receive and broadcast message
-            data = await websocket.receive_json()
-            message = {
-                "type": "message",
-                "username": username,
-                "content": data["content"],
-            }
-            # Broadcast to others
-            await broadcast_message(session_id, message, websocket)
-            # Send back to sender
-            await websocket.send_json(message)
+    # try:
+    #     # Listen for messages
+    #     while True:
+    #         # Receive message from client
+    #         data = await websocket.receive_json()
 
-    except WebSocketDisconnect:
-        # Remove connection
-        connections[session_id].remove(websocket)
-        del users[session_id][websocket]
+    #         # Create message with username
+    #         message = {
+    #             "type": "message",
+    #             "username": username,
+    #             "content": data["content"],
+    #         }
 
-        # Remove session if empty
-        if not connections[session_id]:
-            del connections[session_id]
-            del users[session_id]
-        else:
-            # Announce user left
-            await broadcast_message(
-                session_id, {"type": "system", "content": f"{username} left the group"}
-            )
+    #         # Broadcast to room members
+    #         await broadcast_to_room(room_id, message)
+
+    # except WebSocketDisconnect:
+    #     # Clean up when user disconnects
+    #     if websocket in user_names:
+    #         username = user_names[websocket]
+    #         del user_names[websocket]
+
+    #     if websocket in connection_rooms:
+    #         room_id = connection_rooms[websocket]
+    #         del connection_rooms[websocket]
+
+    #         if room_id in rooms:
+    #             # Remove from room
+    #             rooms[room_id].discard(websocket)
+
+    #             # If room is empty, remove it
+    #             if not rooms[room_id]:
+    #                 del rooms[room_id]
+    #             else:
+    #                 # Notify others that user left
+    #                 await broadcast_to_room(
+    #                     room_id,
+    #                     {"type": "system", "content": f"{username} left the group"},
+    #                 )
 
 
 async def start_server():
