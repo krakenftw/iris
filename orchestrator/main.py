@@ -21,23 +21,6 @@ class Orchestrator:
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
         )
-        self.input_queue = asyncio.Queue()
-        self.output_queue = asyncio.Queue()
 
-    async def start(self):
-        while True:
-            message = await self.input_queue.get()
-            self.consume_nonblocking(message)
-
-    async def consume_nonblocking(self, message: str):
-        take_action = await self.take_action(message)
-        if take_action:
-            tool_calling_prompt = await self.get_tool_calling_prompt(message)
-            tool_response = await self.llm.get_response(tool_calling_prompt)
-            await self.output_queue.put(tool_response)
-
-    async def take_action(self, message: str):
-        pass
-
-    async def get_tool_calling_prompt(self, message: str):
-        pass
+    def process(self, message: str):
+        print(f"Processing message: {message}")
