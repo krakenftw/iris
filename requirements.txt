@@ -1,0 +1,9 @@
+rich>=13.0.0
+typer>=0.9.0
+click>=8.1.0
+prompt-toolkit>=3.0.0
+termcolor>=2.3.0
+pyinquirer>=1.0.3
+tqdm>=4.65.0
+colorama>=0.4.6
+pyfiglet>=0.8.0
