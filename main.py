@@ -1,6 +1,5 @@
 import asyncio
 import json
-import uuid
 
 import dotenv
 import websockets
@@ -50,56 +49,17 @@ async def send_messages(websocket):
         pass
 
 
-async def create_new_room():
-    # Generate a random room ID
-    room_id = str(uuid.uuid4())
-    console.print(
-        f"[green]Room created! Share this invitation link with others:[/green]"
-    )
-    console.print(f"[bold cyan]http://localhost:8765/ws/{room_id}[/bold cyan]")
-    return room_id
-
-
-async def join_room(invitation_link):
-    # Extract room ID from invitation link
-    try:
-        if "/ws/" in invitation_link:
-            room_id = invitation_link.split("/ws/")[1].strip()
-            return room_id
-        else:
-            console.print("[red]Invalid invitation link format[/red]")
-            return None
-    except Exception as e:
-        console.print(f"[red]Error joining room: {str(e)}[/red]")
-        return None
-
-
 async def start_chat():
-    console.print("[bold green]Welcome to Group Chat App![/bold green]")
-    console.print("Select an option:")
-    console.print("1. Create a new room")
-    console.print("2. Join an existing room")
-
-    choice = Prompt.ask("Enter your choice", choices=["1", "2"])
-
-    room_id = None
-    if choice == "1":
-        room_id = await create_new_room()
-    else:
-        invitation_link = Prompt.ask("Paste the invitation link to join")
-        room_id = await join_room(invitation_link)
-        if not room_id:
-            console.print("[red]Failed to join room. Exiting...[/red]")
-            return
+    console.print("[bold green]Welcome to Global Chat App![/bold green]")
 
     # Get username from user
     username = Prompt.ask("[yellow]Enter your username[/yellow]")
 
-    console.print(f"[green]Connecting to room {room_id}...[/green]")
+    console.print("[green]Connecting to chat...[/green]")
 
     # Connect to WebSocket server
-    uri = f"ws://localhost:8765/ws/{room_id}/{username}"
-    console.print("[yellow]Connecting to chat. Press Ctrl+C to exit.[/yellow]")
+    uri = f"ws://localhost:8765/ws/{username}"
+    console.print("[yellow]Connected to chat. Press Ctrl+C to exit.[/yellow]")
 
     try:
         async with websockets.connect(uri) as websocket:
@@ -112,8 +72,7 @@ if __name__ == "__main__":
     try:
 
         async def main():
-            tasks = [start_server(), start_chat()]
-            await asyncio.gather(*tasks)
+            await asyncio.gather(start_server(), start_chat())
 
         asyncio.run(main())
     except KeyboardInterrupt:
