@@ -20,3 +20,4 @@ google-auth-httplib2
 google-api-python-client
 requests-toolbelt
 python-dotenv
+slack-sdk>=3.19.0
