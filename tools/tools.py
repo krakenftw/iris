@@ -3,12 +3,15 @@ import json
 from typing import Dict, List, Any, Optional, Union
 from orchestrator.client import LLMClient
 from tools.slack.service import SlackService
-
+from tools.linear.service import LinearService
+from tools.calenders.googlecal.service import GoogleCalendarService
 class ToolCallingLayer:
     def __init__(self):
         self.llm_client = LLMClient()
         self.slack_service = SlackService()
+        self.linear_service = LinearService()
         self.tools = self._initialize_tools()
+        self.gcal_service = GoogleCalendarService()
     
     def _initialize_tools(self) -> List[Dict[str, Any]]:
         """Initialize all available tools."""
@@ -68,11 +71,11 @@ class ToolCallingLayer:
                             },
                             "start_time": {
                                 "type": "string",
-                                "description": "The start time of the event in ISO format",
+                                "description": "The start time of the event in ISO format, if no start time is provided, the event will be created at the current time",
                             },
                             "end_time": {
                                 "type": "string",
-                                "description": "The end time of the event in ISO format",
+                                "description": "The end time of the event in ISO format, if no end time is provided, the event will be a one hour event",
                             },
                             "attendees": {
                                 "type": "array",
@@ -115,7 +118,7 @@ class ToolCallingLayer:
                             },
                             "assignee_id": {
                                 "type": "string",
-                                "description": "The ID of the user to assign the issue to",
+                                "description": "The EMAIL ID of the user to assign the issue to, if no user is assigned, the issue will be assigned to the team",
                             }
                         },
                         "required": ["title", "team_id"],
@@ -143,17 +146,32 @@ class ToolCallingLayer:
             return f"Message sent to Slack channel {channel}: {message}"
             
         elif tool_name == "gcal_create_event":
+            print("Creating Google Calendar event", arguments)
             # Implementation for creating Google Calendar events would go here
             title = arguments.get("title", "")
             start_time = arguments.get("start_time", "")
             end_time = arguments.get("end_time", "")
-            return f"Created Google Calendar event '{title}' from {start_time} to {end_time}"
+            attendees = arguments.get("attendees", [])
+            description = arguments.get("description", "")
+            
+            self.gcal_service.create_event(title, description, start_time, end_time, attendees)
+            return f"Event created: {title}"
             
         elif tool_name == "linear_create_issue":
             # Implementation for creating Linear issues would go here
             title = arguments.get("title", "")
-            team_id = arguments.get("team_id", "")
-            return f"Created Linear issue '{title}' for team {team_id}"
+            team_id = "Engineering"
+            description = arguments.get("description", "")
+            priority = arguments.get("priority", 2)
+            assignee_id = arguments.get("assignee_id", None)
+            
+            print("team_id", team_id)
+            print("assignee_id", assignee_id)
+            
+            team_id=self.linear_service.get_team_id(team_id)
+            assignee_id=self.linear_service.get_user_id(assignee_id)
+            
+            self.linear_service.create_issue(title,description, team_id,priority,assignee_id)
             
         else:
             return f"Unknown tool: {tool_name}"
@@ -183,6 +201,7 @@ class ToolCallingLayer:
         
         if not hasattr(message, 'tool_calls') or not message.tool_calls:
             # No tool was called
+            print("No tool was called")
             return {
                 "result": message.content,
                 "tool_called": False

@@ -26,6 +26,7 @@ class LinearService:
                     team_id: str,
                     priority: int = 2,
                     assignee_id: Optional[str] = None) -> Dict:
+        print("Creating issue", title, description, team_id, priority, assignee_id)
         """Create a new issue in Linear
         
         Args:

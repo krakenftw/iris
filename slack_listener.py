@@ -6,7 +6,7 @@ import time
 import dotenv
 from rich.console import Console
 from tools.tools import ToolCallingLayer
-
+from datetime import datetime
 from orchestrator.main import Orchestrator
 from tools.slack.service import SlackService
 
@@ -37,17 +37,9 @@ orchestrator = Orchestrator()
 
 
 def process_slack_message(channel_id, user_id, text, event_data):
-    """Process incoming Slack messages
-
-    Args:
-        channel_id: ID of the channel where the message was posted
-        user_id: ID of the user who sent the message
-        text: Content of the message
-        event_data: Full event data from Slack
-    """
     console.print(f"[bold blue]Received message:[/bold blue] {text}")
     # orchestrator.process(text)
-    tool_layer.process_query(text)
+    tool_layer.process_query(text,f"You are a helpful assistant that can use tools to help the user. your tools include slack, google calendar, linear, and calculator. you can use these tools to help the user with their questions. you can also use the tools to help the user with their tasks. you can call multiple tools at once if needed. Todays date is {datetime.now().strftime('%Y-%m-%d')}")
 
 
 def main():

@@ -5,6 +5,7 @@ from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 import os.path
 import pickle
+import os
 
 class GoogleCalendarService:
     SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -43,7 +44,9 @@ class GoogleCalendarService:
             with open(self.TOKEN_FILE, 'wb') as token:
                 pickle.dump(self.creds, token)
 
-        self.service = build('calendar', 'v3', credentials=self.creds)
+        # Disable cache since it's causing oauth2client issues
+        os.environ['GOOGLE_API_USE_CLIENT_CERTIFICATE'] = 'false'
+        self.service = build('calendar', 'v3', credentials=self.creds, cache_discovery=False)
 
     def create_event(self, summary, description, start_time, end_time, attendees=None, location=None):
         """Create a calendar event
@@ -63,11 +66,11 @@ class GoogleCalendarService:
             'summary': summary,
             'description': description,
             'start': {
-                'dateTime': start_time.isoformat(),
+                'dateTime': start_time,
                 'timeZone': 'UTC',
             },
             'end': {
-                'dateTime': end_time.isoformat(),
+                'dateTime': end_time,
                 'timeZone': 'UTC',
             },
         }
@@ -91,8 +94,8 @@ class GoogleCalendarService:
         """
         events_result = self.service.events().list(
             calendarId='primary',
-            timeMin=start_time.isoformat() + 'Z',
-            timeMax=end_time.isoformat() + 'Z',
+            timeMin=start_time,
+            timeMax=end_time,
             singleEvents=True,
             orderBy='startTime'
         ).execute()
@@ -146,7 +149,7 @@ class GoogleCalendarService:
         
         for key, value in kwargs.items():
             if key in ['start', 'end']:
-                event[key]['dateTime'] = value.isoformat()
+                event[key]['dateTime'] = value
             else:
                 event[key] = value
 
